@@ -1,0 +1,6 @@
+{
+  "name": "ColorBW Print - Pemisah PDF Berwarna & Hitam Putih",
+  "description": "Aplikasi profesional usaha fotokopi untuk mendeteksi dan memisahkan halaman PDF berwarna serta hitam putih secara otomatis, cepat, dan aman 100% di browser tanpa API eksternal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,44 @@
+{
+  "appId": "com.colorbwprint.desktop",
+  "productName": "ColorBW-Print",
+  "copyright": "Copyright © 2026 BY: FAIZ_FAHMI_ID",
+  "directories": {
+    "output": "dist-electron"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/**/*",
+    "package.json",
+    "!**/node_modules/**"
+  ],
+  "asar": true,
+  "forceCodeSigning": false,
+  "npmRebuild": false,
+  "nodeGypRebuild": false,
+  "buildDependenciesFromSource": false,
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "legalTrademarks": "Packaging Engine BY: FAIZ_FAHMI_ID"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "ColorBW Print",
+    "artifactName": "ColorBW-Print-Setup-${version}.${ext}"
+  },
+  "portable": {
+    "artifactName": "ColorBW-Print-${version}-Portable.${ext}"
+  }
+}

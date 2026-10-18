@@ -5,6 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: './', // WAJIB untuk Electron desktop
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

@@ -3,15 +3,19 @@ const path = require('path');
 
 let mainWindow;
 
+// Matikan menu bar default (File, Edit, View, Window, Help) agar antarmuka bersih & profesional
+Menu.setApplicationMenu(null);
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 850,
     minWidth: 900,
     minHeight: 650,
-    title: 'ColorBW Print — Aplikasi Pemisah PDF Berwarna & Hitam Putih',
+    title: 'Fahsort — Pemisah PDF Berwarna & Hitam Putih',
     backgroundColor: '#FFFFFF',
     show: false,
+    autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -19,6 +23,9 @@ function createWindow() {
       webSecurity: false,
     },
   });
+
+  // Hapus menu bar bawaan pada jendela aplikasi
+  mainWindow.removeMenu();
 
   mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
 

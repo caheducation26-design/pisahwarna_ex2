@@ -2,7 +2,7 @@ import { PDFDocument } from 'pdf-lib';
 import JSZip from 'jszip';
 
 /**
- * Triggers a file download in the browser without server intervention.
+ * Triggers a file download in the browser/Electron without server intervention.
  */
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
@@ -14,14 +14,15 @@ export function downloadBlob(blob: Blob, filename: string): void {
   setTimeout(() => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, 2000);
+  }, 4000);
 }
 
 /**
  * Extracts specified pages from the source PDF ArrayBuffer and returns a new PDF Blob.
  * Preserves vector fonts, original resolution, page dimensions, and orientations.
+ * Halaman selalu diurutkan dari terkecil ke terbesar (ascending order).
  * @param srcBytes Raw ArrayBuffer of original PDF
- * @param pageIndices 0-based array of page indices to extract, in original sequence
+ * @param pageIndices 0-based array of page indices to extract
  */
 export async function createExtractedPdfBlob(
   srcBytes: ArrayBuffer,
@@ -31,8 +32,15 @@ export async function createExtractedPdfBlob(
     throw new Error('Tidak ada halaman yang dipilih untuk diekspor.');
   }
 
+  // Wajib mengurutkan halaman dari nomor terkecil ke terbesar
+  const sortedIndices = Array.from(new Set(pageIndices)).sort((a, b) => a - b);
+
+  // Buat salinan buffer yang aman agar terhindar dari detached ArrayBuffer
+  const bufferCopy = srcBytes.slice(0);
+  const safeBytes = new Uint8Array(bufferCopy);
+
   // Load the original document
-  const srcDoc = await PDFDocument.load(srcBytes, {
+  const srcDoc = await PDFDocument.load(safeBytes, {
     ignoreEncryption: false,
     updateMetadata: false,
   });
@@ -40,8 +48,8 @@ export async function createExtractedPdfBlob(
   // Create a brand new PDF document
   const newDoc = await PDFDocument.create();
 
-  // Copy specified pages in their original order
-  const copiedPages = await newDoc.copyPages(srcDoc, pageIndices);
+  // Copy specified pages in their strictly ascending order
+  const copiedPages = await newDoc.copyPages(srcDoc, sortedIndices);
   copiedPages.forEach((page) => {
     newDoc.addPage(page);
   });
@@ -52,6 +60,7 @@ export async function createExtractedPdfBlob(
 
 /**
  * Generates and downloads a separated PDF (Color or Black & White)
+ * Disusun berurutan dari halaman terkecil ke terbesar.
  */
 export async function downloadSeparatedPdf(
   srcBytes: ArrayBuffer,
@@ -66,7 +75,7 @@ export async function downloadSeparatedPdf(
 }
 
 /**
- * Exports both Color and Black & White PDFs packaged inside a ZIP archive,
+ * Exports both Color and Black & White PDFs packaged inside a single ZIP archive,
  * including a text job summary for the photocopy operator.
  */
 export async function downloadBothAsZip(

@@ -141,9 +141,9 @@ export default function App() {
         }
       }
 
-      // Read document with PDF.js
+      // Read document with PDF.js using an isolated slice to prevent buffer detachment
       const loadingTask = pdfjsLib.getDocument({
-        data: new Uint8Array(buffer),
+        data: new Uint8Array(buffer.slice(0)),
         cMapUrl,
         cMapPacked: true,
         standardFontDataUrl,
@@ -281,9 +281,25 @@ export default function App() {
     }
   };
 
+  const getSafeFileBuffer = async (): Promise<ArrayBuffer> => {
+    if (currentFile) {
+      return await currentFile.arrayBuffer();
+    }
+    if (fileBuffer && fileBuffer.byteLength > 0) {
+      return fileBuffer.slice(0);
+    }
+    throw new Error('Data file PDF tidak ditemukan di memori.');
+  };
+
   const handleRescan = async () => {
-    if (!fileBuffer || !currentFile) return;
-    await processAndScanPdf(fileBuffer, currentFile);
+    if (!currentFile) return;
+    try {
+      const buffer = await getSafeFileBuffer();
+      setFileBuffer(buffer);
+      await processAndScanPdf(buffer, currentFile);
+    } catch (err) {
+      console.error('Gagal memindai ulang:', err);
+    }
   };
 
   const handleLoadSample = async () => {
@@ -339,17 +355,19 @@ export default function App() {
 
   // Exports
   const handleExportColor = async () => {
-    if (!fileBuffer || !currentFile) return;
+    if (!currentFile) return;
     const colorIndices = pages
       .filter((p) => p.classification === 'color')
-      .map((p) => p.pageNumber - 1); // 0-indexed for pdf-lib
+      .map((p) => p.pageNumber - 1) // 0-indexed for pdf-lib
+      .sort((a, b) => a - b); // Ascending order (halaman terkecil ke terbesar)
 
     if (colorIndices.length === 0) return;
 
     try {
       setStatus('exporting');
-      setExportStage('Mengekstrak halaman berwarna dalam format vektor asli...');
-      await downloadSeparatedPdf(fileBuffer, colorIndices, currentFile.name, 'berwarna');
+      setExportStage('Mengekstrak halaman berwarna dalam format vektor asli (dari nomor terkecil ke terbesar)...');
+      const freshBuffer = await getSafeFileBuffer();
+      await downloadSeparatedPdf(freshBuffer, colorIndices, currentFile.name, 'berwarna');
     } catch (err) {
       console.error('Gagal mengekspor PDF berwarna:', err);
       alert('Terjadi kendala saat menyusun PDF berwarna: ' + (err as Error).message);
@@ -360,17 +378,19 @@ export default function App() {
   };
 
   const handleExportBw = async () => {
-    if (!fileBuffer || !currentFile) return;
+    if (!currentFile) return;
     const bwIndices = pages
       .filter((p) => p.classification === 'bw')
-      .map((p) => p.pageNumber - 1); // 0-indexed for pdf-lib
+      .map((p) => p.pageNumber - 1) // 0-indexed for pdf-lib
+      .sort((a, b) => a - b); // Ascending order (halaman terkecil ke terbesar)
 
     if (bwIndices.length === 0) return;
 
     try {
       setStatus('exporting');
-      setExportStage('Mengekstrak halaman hitam putih dalam format vektor asli...');
-      await downloadSeparatedPdf(fileBuffer, bwIndices, currentFile.name, 'hitam_putih');
+      setExportStage('Mengekstrak halaman hitam putih dalam format vektor asli (dari nomor terkecil ke terbesar)...');
+      const freshBuffer = await getSafeFileBuffer();
+      await downloadSeparatedPdf(freshBuffer, bwIndices, currentFile.name, 'hitam_putih');
     } catch (err) {
       console.error('Gagal mengekspor PDF hitam putih:', err);
       alert('Terjadi kendala saat menyusun PDF hitam putih: ' + (err as Error).message);
@@ -381,29 +401,32 @@ export default function App() {
   };
 
   const handleExportBoth = async () => {
-    if (!fileBuffer || !currentFile) return;
+    if (!currentFile) return;
     const colorIndices = pages
       .filter((p) => p.classification === 'color')
-      .map((p) => p.pageNumber - 1);
+      .map((p) => p.pageNumber - 1)
+      .sort((a, b) => a - b);
 
     const bwIndices = pages
       .filter((p) => p.classification === 'bw')
-      .map((p) => p.pageNumber - 1);
+      .map((p) => p.pageNumber - 1)
+      .sort((a, b) => a - b);
 
     try {
       setStatus('exporting');
       setExportStage('Mengemas kedua dokumen PDF dan laporan ringkasan ke dalam berkas ZIP...');
 
-      const summaryText = `LAPORAN PEMISAHAN DOKUMEN FOTOKOPI (ColorBW Print)
+      const summaryText = `LAPORAN PEMISAHAN DOKUMEN FOTOKOPI (Fahsort)
 Nama File Asli: ${currentFile.name}
 Total Halaman: ${pages.length} Halaman
 - Halaman Berwarna (${colorIndices.length} hal): ${colorIndices.map((i) => i + 1).join(', ') || '-'}
 - Halaman Hitam Putih (${bwIndices.length} hal): ${bwIndices.map((i) => i + 1).join(', ') || '-'}
 Waktu Ekspor: ${new Date().toLocaleString('id-ID')}
-Diproses 100% aman di browser tanpa server luar.`;
+Diproses otomatis menggunakan Fahsort.`;
 
+      const freshBuffer = await getSafeFileBuffer();
       await downloadBothAsZip(
-        fileBuffer,
+        freshBuffer,
         currentFile.name,
         colorIndices,
         bwIndices,
@@ -437,7 +460,6 @@ Diproses 100% aman di browser tanpa server luar.`;
       <Navbar
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
-        onLoadSample={handleLoadSample}
         isProcessing={status === 'scanning' || status === 'loading_pdf' || status === 'exporting'}
       />
 
@@ -562,9 +584,9 @@ Diproses 100% aman di browser tanpa server luar.`;
       <footer className="mt-auto border-t border-slate-200 bg-white py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-700">ColorBW Print</span>
+            <span className="font-bold text-slate-700">Fahsort</span>
             <span>•</span>
-            <span>Aplikasi Pemilah Dokumen Fotokopi Profesional</span>
+            <span>Pemisah PDF Berwarna & Hitam Putih</span>
           </div>
 
           <div className="flex items-center gap-4 text-slate-500">

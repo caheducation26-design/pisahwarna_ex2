@@ -88,7 +88,7 @@ export const JobSummaryCard: React.FC<JobSummaryCardProps> = ({
   };
 
   const generateSummaryText = (): string => {
-    return `=== RINGKASAN PEKERJAAN FOTOKOPI (ColorBW Print) ===
+    return `=== RINGKASAN PEKERJAAN FOTOKOPI (Fahsort) ===
 Dokumen: ${filename}
 Total Halaman: ${totalPages} Halaman
 

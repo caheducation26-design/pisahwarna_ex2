@@ -1,8 +1,8 @@
 {
-  "name": "colorbw-print",
+  "name": "fahsort",
   "private": true,
   "version": "1.0.0",
-  "description": "ColorBW Print - Pemisah PDF Berwarna & Hitam Putih untuk Usaha Fotokopi",
+  "description": "Fahsort - Pemisah PDF Berwarna & Hitam Putih",
   "author": "BY: FAIZ_FAHMI_ID",
   "type": "module",
   "main": "electron/main.cjs",

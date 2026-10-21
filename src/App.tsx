@@ -122,11 +122,31 @@ export default function App() {
     try {
       configurePdfJsWorker();
 
+      // Configure local offline cmaps & fonts
+      let cMapUrl = 'cmaps/';
+      let standardFontDataUrl = 'standard_fonts/';
+      if (typeof window !== 'undefined') {
+        if (window.location.protocol === 'file:') {
+          const baseHref = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+          cMapUrl = new URL('cmaps/', baseHref).href;
+          standardFontDataUrl = new URL('standard_fonts/', baseHref).href;
+        } else {
+          try {
+            cMapUrl = new URL('cmaps/', window.location.href).href;
+            standardFontDataUrl = new URL('standard_fonts/', window.location.href).href;
+          } catch {
+            cMapUrl = '/cmaps/';
+            standardFontDataUrl = '/standard_fonts/';
+          }
+        }
+      }
+
       // Read document with PDF.js
       const loadingTask = pdfjsLib.getDocument({
         data: new Uint8Array(buffer),
-        cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+        cMapUrl,
         cMapPacked: true,
+        standardFontDataUrl,
       });
 
       const pdf = await loadingTask.promise;

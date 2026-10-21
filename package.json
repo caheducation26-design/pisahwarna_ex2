@@ -1,7 +1,9 @@
 {
-  "name": "react-example",
+  "name": "colorbw-print",
   "private": true,
   "version": "1.0.0",
+  "description": "ColorBW Print - Pemisah PDF Berwarna & Hitam Putih untuk Usaha Fotokopi",
+  "author": "BY: FAIZ_FAHMI_ID",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
